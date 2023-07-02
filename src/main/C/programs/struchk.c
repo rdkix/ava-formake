@@ -1581,6 +1581,22 @@ int RunStruchk(struct reaccs_molecule_t **mpp, struct data_line_t *data_list)
 
    if ((result & SIZE_CHECK_FAILED) == 0)
    {
+      for (i = 0; i < mp->n_bonds; ++i) {
+         for (j = 0; j < 2; ++j) {
+            if (mp->bond_array[i].atoms[j] < 1 || mp->bond_array[i].atoms[j] > mp->n_atoms)
+            {
+               snprintf(msg_buffer, MAXMSG,
+                  "%10s    : illegal atom # (%d, max allowed is %d) in bond %d",
+                  mp->name, mp->bond_array[i].atoms[j], mp->n_atoms, i + 1);
+               AddMsgToList(msg_buffer);
+               result |= SIZE_CHECK_FAILED;
+            }
+         }
+      }
+   }
+
+   if ((result & SIZE_CHECK_FAILED) == 0)
+   {
       if (convert_atom_texts)
       {
          tmp = ConvertAtomAliases(mp);
