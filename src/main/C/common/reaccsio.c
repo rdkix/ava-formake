@@ -322,25 +322,49 @@ void PrintREACCSAtom(FILE *fp,
       fprintf(fp,"\n");
 }
 
+#define MAX_BONDLINE_FIELDS 7
+#define BONDLINE_FIELD_LEN 3
+
 int ReadREACCSBond(Fortran_FILE *fp, struct reaccs_bond_t *bp)
 {
-   int nitems, i;
-   char buffer[MAX_BUFFER+1];
+   int nitems, i, j, k;
+   int bond_line_len, n_chars, pos;
+   int *ptrarray[MAX_BONDLINE_FIELDS];
+   char c;
+   char buffer[BONDLINE_FIELD_LEN+1];
 
    if (fp->status != FORTRAN_NORMAL) return(fp->status);
-
-   strncpy(buffer,fp->buffer,MAX_BUFFER);
 
    bp->stereo_symbol = 0;
    bp->dummy = 0;
    bp->topography = 0;
    bp->reaction_mark = NONE;
-   nitems = sscanf(buffer,
-                   "%3d%3d%3d%3d%3d%3d%3d",
-                   &bp->atoms[0],   &bp->atoms[1],
-                   &bp->bond_type,  &bp->stereo_symbol,
-                   &bp->dummy,
-                   &bp->topography, &bp->reaction_mark);
+   ptrarray[0] = &bp->atoms[0];
+   ptrarray[1] = &bp->atoms[1];
+   ptrarray[2] = &bp->bond_type;
+   ptrarray[3] = &bp->stereo_symbol;
+   ptrarray[4] = &bp->dummy;
+   ptrarray[5] = &bp->topography;
+   ptrarray[6] = &bp->reaction_mark;
+   bond_line_len = strlen(fp->buffer);
+   nitems = bond_line_len ? (bond_line_len - 1) / BONDLINE_FIELD_LEN + 1 : 0;
+   if (nitems > MAX_BONDLINE_FIELDS)
+      nitems = MAX_BONDLINE_FIELDS;
+   for (i = 0; i < nitems; ++i)
+   {
+      pos = i * 3;
+      memset(buffer, 0, BONDLINE_FIELD_LEN + 1);
+      n_chars = bond_line_len - pos;
+      if (n_chars > 3)
+         n_chars = 3;
+      for (j = 0, k = 0; j < n_chars; ++j)
+      {
+         c = fp->buffer[pos + j];
+         if (c != ' ')
+            buffer[k++] = c;
+      }
+      sscanf(buffer, "%3d", ptrarray[i]);
+   }
    if (nitems >= 3)
    {
       GetBuffer(fp);
