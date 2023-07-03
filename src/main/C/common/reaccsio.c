@@ -352,11 +352,11 @@ int ReadREACCSBond(Fortran_FILE *fp, struct reaccs_bond_t *bp)
       nitems = MAX_BONDLINE_FIELDS;
    for (i = 0; i < nitems; ++i)
    {
-      pos = i * 3;
+      pos = i * BONDLINE_FIELD_LEN;
       memset(buffer, 0, BONDLINE_FIELD_LEN + 1);
       n_chars = bond_line_len - pos;
-      if (n_chars > 3)
-         n_chars = 3;
+      if (n_chars > BONDLINE_FIELD_LEN)
+         n_chars = BONDLINE_FIELD_LEN;
       for (j = 0, k = 0; j < n_chars; ++j)
       {
          c = fp->buffer[pos + j];
