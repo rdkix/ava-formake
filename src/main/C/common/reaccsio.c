@@ -1394,7 +1394,7 @@ static char * _ReadFile(FILE *fp)
    char * Buf;
    char Line[MAXLINE+1];
    int  Size;
-   int  Len;
+   int Len;
 
    Buf = (char *)malloc(1);
    Size = 1;

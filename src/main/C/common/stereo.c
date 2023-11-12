@@ -111,7 +111,7 @@ int Atom3Parity(struct stereo_bond_t ligands[3])
             reference = i;
          else
          {
-            stereo_error = "three attachments with more than 2 stereobonds";
+            stereo_error = "three attachments with two or more stereobonds";
             return (ILLEGAL_REPRESENTATION);
          }
 

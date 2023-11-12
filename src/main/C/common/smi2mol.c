@@ -274,19 +274,21 @@ char *SmilesAtom(struct reaccs_molecule_t *mp,
    }
 
    ap = mp->atom_array+index;
+   int isotope = 0;
+   GetNumProperty(mp->prop_lines, "M  ISO", index+1, &isotope); // make sure ISO property takes precedence
 
    stereo = PerceiveSMILESAtomStereo(mp, index, lig_ind, nlig, nbp, use_z);
 
    if (AtomSymbolMatch(ap->atom_symbol, "A,B,C,N,O,P,S,F,Cl,Br,I,R")  &&
-       ap->value == 0.0                                             &&
-       ap->charge == NONE                                           &&
-       ap->radical == NONE                                          &&
-       ap->mass_difference == NONE                                  &&
-       ap->query_H_count == NONE                                    &&
-       (ap->mapping == NONE || 0 == strcmp(ap->atom_symbol,"R"))    &&
-       (ap->sub_desc == NONE  ||  !expect_smarts)                   &&
-       atom_text == (char *)NULL                                    &&
-       !(AtomSymbolMatch(ap->atom_symbol, "F,Cl,Br,I") && nlig > 1) &&  // shortcut atom symbol not used for non-trivial halogenes
+       ap->value == 0.0                                               &&
+       ap->charge == NONE                                             &&
+       ap->radical == NONE                                            &&
+       ap->mass_difference == NONE && isotope == 0                    && // make sure ISO property takes precedence
+       ap->query_H_count == NONE                                      &&
+       (ap->mapping == NONE || 0 == strcmp(ap->atom_symbol,"R"))      &&
+       (ap->sub_desc == NONE  ||  !expect_smarts)                     &&
+       atom_text == (char *)NULL                                      &&
+       !(AtomSymbolMatch(ap->atom_symbol, "F,Cl,Br,I") && nlig > 1)   &&  // shortcut atom symbol not used for non-trivial halogenes
        stereo == 0)
    {                                                   /* Easy cases */
       if (ap->atom_symbol[0] == 'R'  || /* use R-atoms for '*'s in SMILES */
@@ -558,15 +560,21 @@ char *SmilesAtom(struct reaccs_molecule_t *mp,
 
    buffer[0] = '\0';                                 /* not so easy cases */
    strcpy(buffer, "[");
-   if (ap->mass_difference != NONE)
+   if (ap->mass_difference != NONE  || isotope > 0)
    {
-      for (i=0; ptable[i].symbol; i++)
-         if (0 == strcmp(ptable[i].symbol, ap->atom_symbol)) break;
-      if (ptable[i].symbol == NULL)  /* element not found */
-         sprintf(tmp,"%d",ap->mass_difference);
-      else
-         sprintf(tmp,"%d",(int)(ptable[i].mass + 0.5) + ap->mass_difference);
-      strcat(buffer, tmp);
+      if (isotope > 0) {
+    	  sprintf(tmp,"%d",isotope);
+    	  strcat(buffer, tmp);
+      }
+      else {
+    	  for (i=0; ptable[i].symbol; i++)
+    		  if (0 == strcmp(ptable[i].symbol, ap->atom_symbol)) break;
+    	  if (ptable[i].symbol == NULL)  /* element not found */
+    		  sprintf(tmp,"%d",ap->mass_difference);
+    	  else
+    		  sprintf(tmp,"%d",(int)(ptable[i].mass + 0.5) + ap->mass_difference);
+    	  strcat(buffer, tmp);
+      }
    }
    else
    {
@@ -2022,7 +2030,7 @@ const char * SmilesToMDLAtom(const char *smiles,
    if ((*isotope) > 0  &&  'A' <= symbol[0]  &&  symbol[0] <= 'Z')  /* convert isotope to MDL form */
    {
       for (i=0; ptable[i].symbol; i++)
-      if (0 == strcmp(ptable[i].symbol, symbol)) break;
+    	  if (0 == strcmp(ptable[i].symbol, symbol)) break;
       if (ptable[i].symbol == NULL)   /* element not found */
       {
          symbol[0] = '\0';
@@ -2036,8 +2044,10 @@ const char * SmilesToMDLAtom(const char *smiles,
             symbol[0] = 'T';
          (*isotope) = 0;
       }
-      else
-         (*isotope) = (*isotope) - (int)(ptable[i].mass + 0.5);
+      else {
+    	  if (AtomSymbolMatch(symbol,"H,He,Li,Be,B,C,N,O,F")) // Algorithm works for those elements
+             (*isotope) = (*isotope) - (int)(ptable[i].mass + 0.5);
+      }
    }
 // fprintf(stderr, "SmilesToMDLAtom(4)\n");
 
@@ -2682,7 +2692,15 @@ struct reaccs_molecule_t *SMIToMOL(const char *smiles, int flags)
             else
                ap->charge  = charge;
             ap->radical = radical;
-            ap->mass_difference = isotope;
+            if (isotope < 4)
+            	ap->mass_difference = isotope;
+            else { // parsing returned isotope verbatim => add a property
+                AddNumProperty(result,
+                               "M  ISO",
+                              (int)(ap-result->atom_array)+1,
+							  isotope);
+                ap->mass_difference  = 0;
+            }
             if (isotope != 0) isomeric_smiles = TRUE;
             ap->query_H_count = hydrogen;
             ap->mapping = mapping;
