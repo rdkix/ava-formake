@@ -1584,6 +1584,22 @@ void MakeSomeHydrogensImplicit(struct reaccs_molecule_t *mp,
                cp += 2*(1+3);
             }
          }
+         else if (0 == strncmp(hp->text, "M  ISO", strlen("M  ISO")))
+         {
+            int niso, iatom, ival;
+            sscanf(hp->text+strlen("M  ISO"), "%d", &niso);
+            cp = hp->text+strlen("M  ISO")+3;
+            for (ii=0; ii<niso; ii++)
+            {
+               sscanf(cp, "%d %d", &iatom, &ival);
+               if (iatom > hnr)
+               {
+                   iatom--;
+                   sprintf(cp, " %3d %3d", iatom, ival);
+               }
+               cp += 2*(1+3);
+            }
+         }
          else if (0 != strncmp(hp->text, "M  ALS", strlen("M  ALS")))
          {
             fprintf(stderr, "need to fix line '%s'\n", hp->text);
