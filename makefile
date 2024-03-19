@@ -106,7 +106,7 @@ COMMON_OBJECTS := \
     ${BUILDDIR}/utilities.${OBJ_EXT} \
     ${BUILDDIR}/local.${OBJ_EXT}
 
-RDKIT_OBJECTS := \
+RDKIX_OBJECTS := \
 	${BUILDDIR}/layout.${OBJ_EXT} \
 	${BUILDDIR}/symboltable.${OBJ_EXT} \
 	${BUILDDIR}/patclean.${OBJ_EXT} \
@@ -177,7 +177,7 @@ variables: readme
 	$(eval JAVAC=$(shell which javac.exe))
 	echo 1: JAVAC=${JAVAC}
 
-programs: ${PROGRAMS} ${LIBTARGETS}/avalon4rdkit.${STATIC_LIB_EXT} ${LIBTARGETS}/avalon_tools.${STATIC_LIB_EXT}
+programs: ${PROGRAMS} ${LIBTARGETS}/avalon4rdkix.${STATIC_LIB_EXT} ${LIBTARGETS}/avalon_tools.${STATIC_LIB_EXT}
 
 run_tests: programs
 	${EXETARGETS}/canonizer${EXE} <${TESTDIR}/resources/canonizer.in >canonizer.out
@@ -265,8 +265,8 @@ ${EXETARGETS}/struchk${EXE} : ${PRGSRCDIR}/struchk.c ${COMMON_OBJECTS} \
 	   ${BUILDDIR}/fixcharges.${OBJ_EXT} \
 	   ${BUILDDIR}/ssmatch.${OBJ_EXT} ${LD_OPTS}
 #
-${LIBTARGETS}/avalon4rdkit.${STATIC_LIB_EXT} : ${RDKIT_OBJECTS}
-	ar rcs ${LIBTARGETS}/libavalon4rdkit.${STATIC_LIB_EXT} ${RDKIT_OBJECTS}
+${LIBTARGETS}/avalon4rdkix.${STATIC_LIB_EXT} : ${RDKIX_OBJECTS}
+	ar rcs ${LIBTARGETS}/libavalon4rdkix.${STATIC_LIB_EXT} ${RDKIX_OBJECTS}
 #
 ${LIBTARGETS}/avalon_tools.${STATIC_LIB_EXT} : ${BUILDDIR}/*.${OBJ_EXT}
 	ar rcs ${LIBTARGETS}/libavalon_tools.${STATIC_LIB_EXT} ${BUILDDIR}/*.${OBJ_EXT}
